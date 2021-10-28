@@ -1,4 +1,2 @@
-/.vscode
-/env
-/genetic_algorithm.py
-/test_sdl.py
+.vscode/
+env/
