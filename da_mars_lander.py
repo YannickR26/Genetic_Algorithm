@@ -470,9 +470,18 @@ class Chromosome:
 
     @staticmethod
     def from_crossover(mother, father) -> tuple:
-        cut = randint(1, CHROMOSOME_SIZE-1)
-        child0 = Chromosome(mother.genes[:cut] + father.genes[cut:])
-        child1 = Chromosome(father.genes[:cut] + mother.genes[cut:])
+        child0 = Chromosome()
+        child1 = Chromosome()
+        for idx, gene in enumerate(range(CHROMOSOME_SIZE)):
+            gene_mother = mother.get_gene(idx)
+            gene_father = father.get_gene(idx)
+            beta = random()
+            child0_rotate = (beta * gene_mother.rotate) + ((1 - beta) * gene_father.rotate)
+            child0_power = (beta * gene_mother.power) + ((1 - beta) * gene_father.power)
+            child0.set_gene(idx, Gene(int(child0_rotate), int(child0_power)))
+            child1_rotate = ((1 - beta) * gene_mother.rotate) + (beta * gene_father.rotate)
+            child1_power = ((1 - beta) * gene_mother.power) + (beta * gene_father.power)
+            child1.set_gene(idx, Gene(int(child1_rotate), int(child1_power)))
         return child0, child1
 
 
