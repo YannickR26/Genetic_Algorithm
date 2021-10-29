@@ -569,6 +569,7 @@ class Renderer:
         sdl2.ext.init()
         self._window = sdl2.ext.Window("2D drawing primitives", size=(MAP_WIDTH//DIVISOR_FOR_PRINTER, MAP_HEIGHT//DIVISOR_FOR_PRINTER))
         self._window.show()
+        self._color = sdl2.ext.Color()
 
     def refresh(self):
         self._window.refresh()
@@ -576,9 +577,11 @@ class Renderer:
     def clear(self):
         sdl2.ext.fill(self._window.get_surface(), sdl2.ext.Color(0, 0, 0, 0))
 
+    def set_color(self, color: sdl2.ext.Color):
+        self._color = color
+
     def draw_line(self, line: Line):
-        color = sdl2.ext.Color()
-        sdl2.ext.line(self._window.get_surface(), color, line.line_to_point())
+        sdl2.ext.line(self._window.get_surface(), self._color, line.line_to_point())
 
     def draw_lines(self, points: list[Point]):
         for idx, point in enumerate(points):
@@ -587,6 +590,16 @@ class Renderer:
                 line = Line(p0, p1)
                 self.draw_line(line)
             p0 = point
+
+    def draw_shuttle_trajectory(self, shuttle: Shuttle):
+        if shuttle.successfull_landing:
+            self.set_color(sdl2.ext.Color(0, 255, 0))
+        elif shuttle.crashed_on_landing_zone:
+            self.set_color(sdl2.ext.Color(0, 200, 200))
+        else:
+            self.set_color(sdl2.ext.Color(100, 100, 100))
+
+        self.draw_lines(shuttle.trajectory())
 
     def is_quit(self):
         events = sdl2.ext.get_events()
@@ -637,9 +650,10 @@ class Game:
             # Create the renderer
             self._renderer.clear()
             for line in self._surface.lines:
+                self._renderer.set_color(sdl2.ext.Color())
                 self._renderer.draw_line(line)
             for chromosome in self._genetic_population.get_chromosomes():
-                self._renderer.draw_lines(chromosome.shuttle.trajectory())
+                self._renderer.draw_shuttle_trajectory(chromosome.shuttle)
             self._renderer.refresh()
 
             nb_generation += 1
