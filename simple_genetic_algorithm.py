@@ -16,7 +16,7 @@ EXPECTED_STR = "Ceci est une phrase relativement complex avec beaucoup de mots, 
 CHANCE_TO_MUTATE = 0.3
 
 # Enter here the percent of top-grated individuals to be retained for the next generation (range 0-1)
-GRADED_RETAIN_PERCENT = 0.7
+GRADED_RETAIN_PERCENT = 0.5
 
 # Enter here the chance for a non top-grated individual to be retained for the next generation (range 0-1)
 CHANCE_RETAIN_NONGRATED = 0.05
@@ -25,7 +25,7 @@ CHANCE_RETAIN_NONGRATED = 0.05
 POPULATION_COUNT = 100
 
 # Maximum number of generation before stopping the script
-GENERATION_COUNT_MAX = 100000
+GENERATION_COUNT_MAX = 20000
 
 # ----- Do not touch anything after this line
 
@@ -38,7 +38,7 @@ LENGTH_OF_EXPECTED_STR = len(EXPECTED_STR)
 # Precompute LENGTH_OF_EXPECTED_STR // 2
 MIDDLE_LENGTH_OF_EXPECTED_STR = LENGTH_OF_EXPECTED_STR // 2
 
-# Charmap of all allowed characters (A-Z a-z, space and !\'.)
+# Charmap of all allowed characters (A-Z a-z, space and !\'.,)
 ALLOWED_CHARMAP = ascii_letters + ' !\'.,'
 
 # Maximum fitness value
@@ -148,8 +148,8 @@ def main():
     average_grade = average_population_grade(population)
     print('Starting grade: %.2f' % average_grade, '/ %d' % MAXIMUM_FITNESS)
 
-    for x in population:
-        print(''.join(x))
+    # for x in population:
+    #     print(''.join(x))
 
     # Make the population evolve
     i = 0
@@ -182,6 +182,8 @@ def main():
     # Print the solution
     if solution:
         print(f'Solution found ({len(solution)} times) after {i} generations.')
+        for sol in solution:
+            print(''.join(sol))
         # for x in population:
         #     print(''.join(x))
     else:
