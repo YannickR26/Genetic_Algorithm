@@ -521,35 +521,33 @@ class GeneticPopulation:
 
         # Filter the top graded chromosome
         cut_pos = int(GRADED_RETAIN_PERCENT * POPULATION_SIZE)
-        new_population = self._population[:cut_pos]
-
-        print("len pop after cut: " + str(len(new_population)))
+        new_population = deepcopy(self._population[:cut_pos])
 
         # Randomly add other chromosome to promote genetic diversity
         for chromosome in self._population[cut_pos:]:
             if random() < CHANCE_RETAIN_NONGRATED:
                 new_population.append(chromosome)
 
-        print("len pop before crossover: " + str(len(new_population)))
-
         # Crossover parents to create children
-        while len(new_population) < POPULATION_SIZE:
+        children = []
+        while (len(new_population) + len(children)) < POPULATION_SIZE:
             mother = choice(new_population)
             father = choice(new_population)
             if mother == father:
                 continue
             child1, child2 = Chromosome.from_crossover(mother, father)
-            new_population.append(child1)
-            new_population.append(child2)
+            children.append(deepcopy(child1))
+            children.append(deepcopy(child2))
 
-        print("len pop after crossover: " + str(len(new_population)))
+        new_population.extend(children)
+        new_population = new_population[:POPULATION_SIZE]
 
         # Mutate some chromosome
         for chromosome in new_population:
             chromosome.mutate()
 
         # Save the new population
-        self._population = new_population[:POPULATION_SIZE]
+        self._population = new_population
 
 
 class Renderer:
