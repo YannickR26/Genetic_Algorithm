@@ -278,7 +278,7 @@ class Shuttle:
     def trajectory(self) -> list[Point]:
         return self._trajectory
 
-    def compute(self) -> tuple:
+    def _compute(self) -> tuple:
         theta = math.radians(90 + self._rotate)
         acc_v = (math.sin(theta) * self._power) - MARS_GRAVITY
         acc_h = math.cos(theta) * self._power
@@ -309,7 +309,7 @@ class Shuttle:
         self._fuel -= self._power
 
         # Compute data
-        acc_v, disp_v, acc_h, disp_h = self.compute()
+        acc_v, disp_v, acc_h, disp_h = self._compute()
 
         # Update position and speed
         self.position = self.position + Point(disp_h, disp_v)
@@ -424,8 +424,7 @@ class Chromosome:
         self._shuttle = deepcopy(shuttle)
 
     def simulate(self):
-        for idx, gene in enumerate(self._genes):
-            # print(f"shuttle: {self._shuttle}")
+        for gene in self._genes:
             self._shuttle.simulate(gene.rotate, gene.power)
             (
                 crashed,
@@ -433,7 +432,10 @@ class Chromosome:
                 crashed_in_landing_zone,
             ) = self._surface.collision_with_surface(self._shuttle.trajectory()[-2], self._shuttle.trajectory()[-1])
             if crashed:
-                # print(f"crashed at the gene {idx}")
+                distance = self._surface.find_distance_to_landing_zone(
+                    self._shuttle.position, idx_line_crashed
+                )
+                self._shuttle.crashed_distance = distance
                 if crashed_in_landing_zone:
                     self._shuttle.crashed_on_landing_zone = True
                     if Shuttle.is_good_landing(self._shuttle):
@@ -441,11 +443,6 @@ class Chromosome:
                         print("Shuttle landing successfully")
                     else:
                         print("Shuttle crash on the landing area")
-                else:
-                    distance = self._surface.find_distance_to_landing_zone(
-                        self._shuttle.position, idx_line_crashed
-                    )
-                    self._shuttle.crashed_distance = distance
                 break
 
     def evaluate(self):
@@ -486,7 +483,7 @@ class Chromosome:
                 gene.random()
 
     @staticmethod
-    def from_crossover(mother, father):
+    def from_crossover(mother, father) -> tuple:
         cut = randint(1, CHROMOSOME_SIZE-1)
         child0 = Chromosome(mother.genes[:cut] + father.genes[cut:])
         child1 = Chromosome(father.genes[:cut] + mother.genes[cut:])
