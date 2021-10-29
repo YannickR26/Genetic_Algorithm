@@ -9,20 +9,42 @@ import time
 
 from sdl2.ext import color
 
+# Tout droit
+# INPUT_DATA = {
+#     "surface": [
+#         [0, 100],
+#         [1000, 500],
+#         [1500, 100],
+#         [3000, 100],
+#         [5000, 1500],
+#         [6999, 1000],
+#     ],
+#     "shuttle": {
+#         "position": [2500, 2500],
+#         "h_speed": 0,
+#         "v_speed": 0,
+#         "fuel": 500,
+#         "rotate": 0,
+#         "power": 0
+#     },
+# }
+
+# Facile a droite
 INPUT_DATA = {
     "surface": [
         [0, 100],
         [1000, 500],
-        [1500, 100],
-        [3000, 100],
-        [5000, 1500],
-        [6999, 1000],
+        [1500, 1500],
+        [3000, 1000],
+        [4000, 150],
+        [5500, 150],
+        [6999, 800],
     ],
     "shuttle": {
-        "position": [2500, 2500],
+        "position": [2500, 2700],
         "h_speed": 0,
         "v_speed": 0,
-        "fuel": 500,
+        "fuel": 550,
         "rotate": 0,
         "power": 0
     },
