@@ -446,36 +446,17 @@ class Chromosome:
                 break
 
     def evaluate(self):
-        if (not 0 <= self._shuttle.position.x < MAP_WIDTH or not 0 <= self._shuttle.position.y < MAP_HEIGHT):
+        if (not (0 <= self._shuttle.position.x < MAP_WIDTH) or not (0 <= self._shuttle.position.y < MAP_HEIGHT)):
             # 0: crashed out of the MAP
             self._evaluation = 0.0
         else:
-            eval_distance = clamp(3000 - (abs(self._shuttle.crashed_distance) - 500), 0, 3000) / 3000
-            eval_v_speed = clamp(MAX_V_SPEED - abs(self._shuttle.v_speed), 0, MAX_V_SPEED) / MAX_V_SPEED
-            eval_h_speed = clamp(MAX_H_SPEED - abs(self._shuttle.h_speed), 0, MAX_H_SPEED) / MAX_H_SPEED
-            eval_rotate = clamp(MAX_ROTATION_ANGLE - abs(self._shuttle.rotate), 0, MAX_ROTATION_ANGLE) / MAX_ROTATION_ANGLE
-            self._evaluation = (eval_distance + eval_v_speed + eval_h_speed + eval_rotate) / 4
-
-            print(f"evaluation: {self._evaluation:.3f}, distance: {eval_distance:.3f}, v_speed: {eval_v_speed:.3f}, h_speed: {eval_h_speed:.3f}, rotate: {eval_rotate:.3f}")
-
-        # # 0-100: crashed somewhere, calculate score by distance to landing area
-        # elif not self._shuttle.crashed_on_landing_zone:
-        #     distance = self._shuttle.crashed_distance
-
-        #     # Calculate score from distance
-        #     max_distance = self._surface.get_max_distance()
-        #     self._evaluation = 100.0 - (100.0 * distance / max_distance)
-
-        #     # High speeds are bad, they decrease maneuvrability
-        #     # self._evaluation -= clamp(self._shuttle.speed * 0.1, 0, 100)
-
-        # # 100-200: crashed into landing area, calculate score by speed above safety
-        # elif not self._shuttle.successfull_landing:
-        #     self._evaluation = 200.0 - clamp(self._shuttle.speed * 0.5, 0, 100)
-
-        # # 200-300: landed safely, calculate score by fuel remaining
-        # else:
-        #     self._evaluation = 200.0 + self._shuttle.fuel
+            cost = (self._shuttle.crashed_distance/500)**2 + \
+                    (self._shuttle.v_speed/MAX_V_SPEED)**2 + \
+                    (self._shuttle.h_speed/MAX_H_SPEED)**2 + \
+                    (self._shuttle.rotate/STEP_ROTATION_ANGLE)**2 + \
+                    (500 - self._shuttle.fuel)/500
+            self._evaluation = 1/cost
+            print(f"evaluation: {self._evaluation:.3f}, cost: {cost:.3f}, distance: {self._shuttle.crashed_distance:.3f}, v_speed: {self._shuttle.v_speed:.3f}, h_speed: {self._shuttle.h_speed:.3f}, rotate: {self._shuttle.rotate:.3f}, fuel: {self._shuttle.fuel}")
 
     def mutate(self):
         for gene in self._genes:
