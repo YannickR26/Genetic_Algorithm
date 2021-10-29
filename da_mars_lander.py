@@ -656,6 +656,18 @@ class Game:
                 self._renderer.draw_shuttle_trajectory(chromosome.shuttle)
             self._renderer.refresh()
 
+            # Check if one or more shuttle are successfully landing
+            for chromosome in self._genetic_population.get_chromosomes():
+                if chromosome.shuttle.successfull_landing:
+                    done = True
+                    result = "["
+                    for gene in chromosome.genes:
+                        result += f"{gene},"
+                    result += "]"
+                    with open(f"result.txt", "w") as f:
+                        f.write(result)
+                    continue
+
             nb_generation += 1
             print(f"nb_generation: {nb_generation}")
             # with open(f"population_{nb_generation}.txt", "w") as f:
