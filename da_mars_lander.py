@@ -291,11 +291,7 @@ class Shuttle:
 
     @property
     def successfull_landing(self) -> bool:
-        return self._successfull_landing
-
-    @successfull_landing.setter
-    def successfull_landing(self, value: bool):
-        self._successfull_landing = value
+        return self.crashed_on_landing_zone and abs(self.v_speed) < MAX_V_SPEED and abs(self.h_speed) < MAX_H_SPEED and abs(self.rotate) < 1 and self.fuel > 0
 
     def trajectory(self) -> list[Point]:
         return self._trajectory
@@ -337,18 +333,6 @@ class Shuttle:
         self.position = self.position + Point(disp_h, disp_v)
         self._h_speed += acc_h
         self._v_speed += acc_v
-
-    @staticmethod
-    def is_good_landing(sht0) -> bool:
-        if (
-            abs(sht0.v_speed) < MAX_V_SPEED
-            and abs(sht0.h_speed) < MAX_H_SPEED
-            and abs(sht0.rotate) < STEP_ROTATION_ANGLE
-        ):
-            # if abs(sht1.v_speed) < MAX_V_SPEED and abs(sht1.h_speed) < MAX_H_SPEED:
-            return True
-
-        return False
 
 
 class Gene:
@@ -460,11 +444,10 @@ class Chromosome:
                 self._shuttle.crashed_distance = distance
                 if crashed_in_landing_zone:
                     self._shuttle.crashed_on_landing_zone = True
-                    if Shuttle.is_good_landing(self._shuttle):
-                        self._shuttle.successfull_landing = True
-                        print("Shuttle landing successfully")
-                    else:
-                        print("Shuttle crash on the landing area")
+                    if self._shuttle.successfull_landing:
+                        print("### Shuttle landing successfully ###")
+                    # else:
+                        # print("Shuttle crash on the landing area")
                 break
 
     def evaluate(self):
