@@ -338,6 +338,12 @@ class Gene:
         self._rotate: int = rotate
         self._power: int = power
 
+    def __eq__(self, other) -> bool:
+        return self._rotate == other.rotate and self._power == other.power
+
+    def __str__(self) -> str:
+        return f"{self._rotate}, {self._power}"
+
     @property
     def rotate(self) -> int:
         return self._rotate
@@ -353,12 +359,6 @@ class Gene:
     @power.setter
     def power(self, value: int):
         self._power = value
-
-    def __eq__(self, other) -> bool:
-        return self._rotate == other.rotate and self._power == other.power
-
-    def __str__(self) -> str:
-        return f"{self._rotate}, {self._power}"
 
     def clamp(self):
         self._rotate = clamp(self._rotate, MIN_ROTATION_ANGLE, MAX_ROTATION_ANGLE)
@@ -453,13 +453,14 @@ class Chromosome:
             # 0: crashed out of the MAP
             self._evaluation = 0.0
         else:
-            cost = (self._shuttle.crashed_distance/500)**2 + \
-                    (self._shuttle.v_speed/MAX_V_SPEED)**2 + \
-                    (self._shuttle.h_speed/MAX_H_SPEED)**2 + \
-                    (self._shuttle.rotate/STEP_ROTATION_ANGLE)**2 + \
-                    (500 - self._shuttle.fuel)/500
+            cost = 0.001
+            cost += (self._shuttle.crashed_distance/500)**2
+            # cost += (self._shuttle.v_speed/MAX_V_SPEED)**2
+            # cost += (self._shuttle.h_speed/MAX_H_SPEED)**2
+            # cost += (self._shuttle.rotate)**2
+            # cost += (500 - self._shuttle.fuel)/500
             self._evaluation = 1/cost
-            print(f"evaluation: {self._evaluation:.3f}, cost: {cost:.3f}, distance: {self._shuttle.crashed_distance:.3f}, v_speed: {self._shuttle.v_speed:.3f}, h_speed: {self._shuttle.h_speed:.3f}, rotate: {self._shuttle.rotate:.3f}, fuel: {self._shuttle.fuel}")
+            # print(f"evaluation: {self._evaluation:.3f}, cost: {cost:.3f}, distance: {self._shuttle.crashed_distance:.3f}, v_speed: {self._shuttle.v_speed:.3f}, h_speed: {self._shuttle.h_speed:.3f}, rotate: {self._shuttle.rotate:.3f}, fuel: {self._shuttle.fuel}")
 
     def mutate(self):
         for gene in self._genes:
