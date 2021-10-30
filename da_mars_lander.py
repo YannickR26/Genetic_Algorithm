@@ -656,11 +656,12 @@ class Game:
             # Check if one or more shuttle are successfully landing
             for chromosome in self._genetic_population.get_chromosomes():
                 if chromosome.shuttle.successfull_landing:
+                    print("The shuttle landing with:")
+                    print(chromosome.shuttle)
                     done = True
-                    result = "["
+                    result = ""
                     for gene in chromosome.genes:
-                        result += f"{gene},"
-                    result += "]"
+                        result += f"{gene}\n"
                     with open(f"result.txt", "w") as f:
                         f.write(result)
                     continue
@@ -682,6 +683,63 @@ class Game:
 
     def end(self):
         pass
+
+    def play(self):
+        self.begin()
+        self.loop()
+        self.end()
+
+
+class Simulator:
+    def __init__(self) -> None:
+        self._surface: Surface = Surface()
+        self._shuttle: Shuttle = Shuttle()
+        self._chromosome: Chromosome = Chromosome()
+        self._renderer: Renderer = Renderer()
+
+    def add_parameters(self, data):
+        # Create surface from data
+        surface = data.get("surface", None)
+        if surface is not None:
+            self._surface.create_surface_from_point(surface)
+
+        # Create shuttle from data
+        shuttle = data.get("shuttle", None)
+        if shuttle is not None:
+            self._shuttle.position = Point(int(shuttle["position"][0]), int(shuttle["position"][1]))
+            self._shuttle.h_speed = int(shuttle["h_speed"])
+            self._shuttle.v_speed = int(shuttle["v_speed"])
+            self._shuttle.fuel = int(shuttle["fuel"])
+            self._shuttle.rotate = int(shuttle["rotate"])
+
+    def add_data(self, data):
+        for idx, d in enumerate(data):
+            gene = Gene(d[0], d[1])
+            self._chromosome.set_gene(idx, gene)
+
+    def begin(self):
+        print("Start shuttle => " + str(self._shuttle))
+        for line in self._surface.lines:
+            if line.landing_zone_direction == 0:
+                self._renderer.set_color(sdl2.ext.Color(0, 0, 255))
+                self._renderer.draw_line(line)
+            else:
+                self._renderer.set_color(sdl2.ext.Color())
+                self._renderer.draw_line(line)
+
+        self._chromosome.shuttle = self._shuttle
+        self._chromosome.surface = self._surface
+
+    def loop(self):
+        self._chromosome.simulate()
+        self._chromosome.evaluate()
+
+    def end(self):
+        # Create the renderer
+        self._renderer.draw_shuttle_trajectory(self._chromosome.shuttle)
+        self._renderer.refresh()
+        while not self._renderer.is_quit():
+            pass
 
     def play(self):
         self.begin()
