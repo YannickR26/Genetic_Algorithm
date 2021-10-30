@@ -404,11 +404,11 @@ class Chromosome:
         return self._genes[idx]
 
     @property
-    def genes(self) -> Gene:
+    def genes(self) -> list[Gene]:
         return self._genes
 
     @genes.setter
-    def genes(self, genes: Gene):
+    def genes(self, genes: list[Gene]):
         self._genes = genes
 
     @property
@@ -551,15 +551,14 @@ class GeneticPopulation:
             children.append(deepcopy(child1))
             children.append(deepcopy(child2))
 
-        new_population.extend(children)
-        new_population = new_population[:POPULATION_SIZE]
-
         # Mutate some chromosome
-        for chromosome in new_population:
+        for chromosome in children:
             chromosome.mutate()
 
+        new_population.extend(children)
+
         # Save the new population
-        self._population = new_population
+        self._population = new_population[:POPULATION_SIZE]
 
 
 class Renderer:
