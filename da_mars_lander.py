@@ -291,26 +291,24 @@ class Shuttle:
 
     @property
     def successfull_landing(self) -> bool:
-        return self.crashed_on_landing_zone and abs(self.v_speed) < MAX_V_SPEED and abs(self.h_speed) < MAX_H_SPEED and abs(self.rotate) < 1 and self.fuel > 0
+        return self.crashed_on_landing_zone and abs(self.v_speed) < MAX_V_SPEED and abs(self.h_speed) < MAX_H_SPEED and self.rotate == 0 and self.fuel > 0
 
     def trajectory(self) -> list[Point]:
         return self._trajectory
 
     def _compute(self) -> tuple:
-        theta = math.radians(90 + self._rotate)
+        theta = math.radians(self._rotate + 90)
         acc_v = (math.sin(theta) * self._power) - MARS_GRAVITY
         acc_h = math.cos(theta) * self._power
-        disp_v = int(self._v_speed + (acc_v * 0.5))
-        disp_h = int(self._h_speed + (acc_h * 0.5))
+        disp_v = round(self._v_speed + (acc_v / 2))
+        disp_h = round(self._h_speed + (acc_h / 2))
         return acc_v, disp_v, acc_h, disp_h
 
     def _add_rotate(self, rotate: int):
         # Clamp the rotate in the range [-15, 15]
         rotate_step = clamp(rotate, -STEP_ROTATION_ANGLE, STEP_ROTATION_ANGLE)
         # Add the rotate angle and clamp in the range [-90, 90]
-        self._rotate = clamp(
-            self._rotate + rotate_step, MIN_ROTATION_ANGLE, MAX_ROTATION_ANGLE
-        )
+        self._rotate = clamp(self._rotate + rotate_step, MIN_ROTATION_ANGLE, MAX_ROTATION_ANGLE)
 
     def _add_power(self, power: int):
         # Clamp the power in the range [-1, 1]
@@ -367,8 +365,8 @@ class Gene:
         self._power = clamp(self._power, MIN_POWER, MAX_POWER)
 
     def random(self):
-        self._rotate = randint(MIN_ROTATION_ANGLE, MAX_ROTATION_ANGLE)
-        self._power = randint(MIN_POWER, MAX_POWER)
+        self._rotate = randint(-STEP_ROTATION_ANGLE, STEP_ROTATION_ANGLE)
+        self._power = randint(-STEP_POWER, STEP_POWER)
 
 
 class Chromosome:
