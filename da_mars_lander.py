@@ -276,6 +276,7 @@ class Shuttle:
         self._rotate: int = 0  # The rotation angle in degrees (-90 to 90)
         self._power: int = 0  # The thrust power (0 to 4)
         self._fuel: int = 1000  # The quantity of remaining fuel in liters
+        self._crashed: bool = False
         self._crash_on_landing_zone: bool = False
         self._crash_distance: float = 0.0  # Distance between crash and landing zone
         self._successfull_landing: bool = False
@@ -344,6 +345,14 @@ class Shuttle:
         self._fuel = value
 
     @property
+    def crashed(self) -> bool:
+        return self._crashed
+
+    @crashed.setter
+    def crashed(self, value: bool):
+        self._crashed = value
+
+    @property
     def crashed_on_landing_zone(self) -> bool:
         return self._crash_on_landing_zone
 
@@ -405,8 +414,8 @@ class Shuttle:
 
 class Gene:
     def __init__(self, rotate: int = 0, power: int = 0) -> None:
-        self._rotate: int = rotate
-        self._power: int = power
+        self._rotate: int = rotate  # The change in angle, based on previous postion, in range [-15, 15]
+        self._power: int = power    # The change in power, based on previoud postion, in range [-1, 1]
 
     def __eq__(self, other) -> bool:
         return self._rotate == other.rotate and self._power == other.power
@@ -429,10 +438,6 @@ class Gene:
     @power.setter
     def power(self, value: int):
         self._power = value
-
-    def clamp(self):
-        self._rotate = clamp(self._rotate, MIN_ROTATION_ANGLE, MAX_ROTATION_ANGLE)
-        self._power = clamp(self._power, MIN_POWER, MAX_POWER)
 
     def random(self):
         self._rotate = randint(-STEP_ROTATION_ANGLE, STEP_ROTATION_ANGLE)
@@ -506,6 +511,7 @@ class Chromosome:
                 crashed_in_landing_zone,
             ) = self._surface.collision_with_surface(self._shuttle.trajectory()[-2], self._shuttle.trajectory()[-1])
             if crashed:
+                self._shuttle.crashed = True
                 distance = self._surface.find_distance_to_landing_zone(
                     self._shuttle.position, idx_line_crashed
                 )
@@ -519,7 +525,7 @@ class Chromosome:
                 break
 
     def evaluate(self):
-        if (not (0 <= self._shuttle.position.x < MAP_WIDTH) or not (0 <= self._shuttle.position.y < MAP_HEIGHT)):
+        if (not (0 <= self._shuttle.position.x < MAP_WIDTH) or not (0 <= self._shuttle.position.y < MAP_HEIGHT)) or not self._shuttle.crashed:
             # 0: crashed out of the MAP
             self._evaluation = 0.0
         else:
@@ -684,6 +690,7 @@ class Game:
         self._shuttle: Shuttle = Shuttle()
         self._genetic_population: GeneticPopulation = GeneticPopulation()
         self._renderer: Renderer = Renderer()
+        self._log_fitness: list[float] = []
 
     def add_parameters(self, data):
         # Create surface from data
@@ -714,6 +721,8 @@ class Game:
         while not done and not self._renderer.is_quit() and nb_generation < GENERATION_COUNT_MAX:
             # Simulate the genetic population
             self._genetic_population.simulate()
+
+            self._log_fitness.append(self._genetic_population.global_fitness())
 
             # Create the renderer
             self._renderer.clear()
