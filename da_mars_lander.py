@@ -1,36 +1,38 @@
 from dataclasses import dataclass
 import math
-from random import randint, random, choice
+import sys
+from random import randint, random
 from typing import Optional
 from copy import deepcopy
+import numpy as np
+from numpy.lib.function_base import average
 import sdl2
 import sdl2.ext
 import time
-
-from sdl2.ext import color
+import pygal
 
 # Tout droit
-# INPUT_DATA = {
-#     "surface": [
-#         [0, 100],
-#         [1000, 500],
-#         [1500, 100],
-#         [3000, 100],
-#         [5000, 1500],
-#         [6999, 1000],
-#     ],
-#     "shuttle": {
-#         "position": [2500, 2500],
-#         "h_speed": 0,
-#         "v_speed": 0,
-#         "fuel": 500,
-#         "rotate": 0,
-#         "power": 0
-#     },
-# }
+INPUT_DATA_0 = {
+    "surface": [
+        [0, 100],
+        [1000, 500],
+        [1500, 100],
+        [3000, 100],
+        [5000, 1500],
+        [6999, 1000],
+    ],
+    "shuttle": {
+        "position": [2500, 2500],
+        "h_speed": 0,
+        "v_speed": 0,
+        "fuel": 500,
+        "rotate": 0,
+        "power": 0
+    },
+}
 
 # Facile a droite
-INPUT_DATA = {
+INPUT_DATA_1 = {
     "surface": [
         [0, 100],
         [1000, 500],
@@ -46,6 +48,74 @@ INPUT_DATA = {
         "v_speed": 0,
         "fuel": 550,
         "rotate": 0,
+        "power": 0
+    },
+}
+
+# Gorge profonde
+INPUT_DATA_4 = {
+    "surface": [
+        [0, 1000],
+        [300, 1500],
+        [350, 1400],
+        [500, 2000],
+        [800, 1800],
+        [1000, 2500],
+        [1200, 2100],
+        [1500, 2400],
+        [2000, 1000],
+        [2200, 500],
+        [2500, 100],
+        [2900, 800],
+        [3000, 500],
+        [3200, 1000],
+        [3500, 2000],
+        [3800, 800],
+        [4000, 200],
+        [5000, 200],
+        [5500, 1500],
+        [6999, 2800],
+    ],
+    "shuttle": {
+        "position": [500, 2700],
+        "h_speed": 100,
+        "v_speed": 0,
+        "fuel": 800,
+        "rotate": -90,
+        "power": 0
+    },
+}
+
+# Haut plateau
+INPUT_DATA_5 = {
+    "surface": [
+        [0, 1000],
+        [300, 1500],
+        [350, 1400],
+        [500, 2100],
+        [1500, 2100],
+        [2000, 200],
+        [2500, 500],
+        [2900, 300],
+        [3000, 200],
+        [3200, 1000],
+        [3500, 500],
+        [3800, 800],
+        [4000, 200],
+        [4200, 800],
+        [4800, 600],
+        [5000, 1200],
+        [5500, 900],
+        [6000, 500],
+        [6500, 300],
+        [6999, 500],
+    ],
+    "shuttle": {
+        "position": [6500, 2700],
+        "h_speed": -50,
+        "v_speed": 0,
+        "fuel": 1000,
+        "rotate": 90,
         "power": 0
     },
 }
@@ -683,7 +753,12 @@ class Game:
             print("!!! No solution found !!!")
 
     def end(self):
-        pass
+        line_chart = pygal.Line(show_dots=True, show_legend=False)
+        line_chart.title = 'Fitness evolution'
+        line_chart.x_title = 'Generations'
+        line_chart.y_title = 'Fitness'
+        line_chart.add('Fitness', self._log_fitness)
+        line_chart.render_to_file('fitness_chart.svg')
 
     def play(self):
         self.begin()
@@ -749,8 +824,38 @@ class Simulator:
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.add_parameters(INPUT_DATA)
+    arg = sys.argv[1] if len(sys.argv) >= 2 else "1"
+    mode = sys.argv[2] if len(sys.argv) >= 3 else "--genetic_algorithm"
 
-    game.play()
-    time.sleep(2)
+    if mode == "--replay":
+        simu = Simulator()
+        if arg == "0":
+            simu.add_parameters(INPUT_DATA_0)
+        elif arg == "1":
+            simu.add_parameters(INPUT_DATA_1)
+        elif arg == "4":
+            simu.add_parameters(INPUT_DATA_4)
+        elif arg == "5":
+            simu.add_parameters(INPUT_DATA_5)
+        data = []
+        with open(f"result.txt", "r") as f:
+            for line in f.readlines():
+                tmp = [int(d) for d in line.split(',')]
+                data.append(tuple(tmp))
+        simu.add_data(data)
+        simu.play()
+        exit()
+
+    else:
+        game = Game()
+        if arg == "0":
+            game.add_parameters(INPUT_DATA_0)
+        elif arg == "1":
+            game.add_parameters(INPUT_DATA_1)
+        elif arg == "4":
+            game.add_parameters(INPUT_DATA_4)
+        elif arg == "5":
+            game.add_parameters(INPUT_DATA_5)
+
+        game.play()
+        time.sleep(2)
