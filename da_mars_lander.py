@@ -9,116 +9,9 @@ from numpy.lib.function_base import average
 import sdl2
 import sdl2.ext
 import time
+import json
 import pygal
 
-# Tout droit
-INPUT_DATA_0 = {
-    "surface": [
-        [0, 100],
-        [1000, 500],
-        [1500, 100],
-        [3000, 100],
-        [5000, 1500],
-        [6999, 1000],
-    ],
-    "shuttle": {
-        "position": [2500, 2500],
-        "h_speed": 0,
-        "v_speed": 0,
-        "fuel": 500,
-        "rotate": 0,
-        "power": 0
-    },
-}
-
-# Facile a droite
-INPUT_DATA_1 = {
-    "surface": [
-        [0, 100],
-        [1000, 500],
-        [1500, 1500],
-        [3000, 1000],
-        [4000, 150],
-        [5500, 150],
-        [6999, 800],
-    ],
-    "shuttle": {
-        "position": [2500, 2700],
-        "h_speed": 0,
-        "v_speed": 0,
-        "fuel": 550,
-        "rotate": 0,
-        "power": 0
-    },
-}
-
-# Gorge profonde
-INPUT_DATA_4 = {
-    "surface": [
-        [0, 1000],
-        [300, 1500],
-        [350, 1400],
-        [500, 2000],
-        [800, 1800],
-        [1000, 2500],
-        [1200, 2100],
-        [1500, 2400],
-        [2000, 1000],
-        [2200, 500],
-        [2500, 100],
-        [2900, 800],
-        [3000, 500],
-        [3200, 1000],
-        [3500, 2000],
-        [3800, 800],
-        [4000, 200],
-        [5000, 200],
-        [5500, 1500],
-        [6999, 2800],
-    ],
-    "shuttle": {
-        "position": [500, 2700],
-        "h_speed": 100,
-        "v_speed": 0,
-        "fuel": 800,
-        "rotate": -90,
-        "power": 0
-    },
-}
-
-# Haut plateau
-INPUT_DATA_5 = {
-    "surface": [
-        [0, 1000],
-        [300, 1500],
-        [350, 1400],
-        [500, 2100],
-        [1500, 2100],
-        [2000, 200],
-        [2500, 500],
-        [2900, 300],
-        [3000, 200],
-        [3200, 1000],
-        [3500, 500],
-        [3800, 800],
-        [4000, 200],
-        [4200, 800],
-        [4800, 600],
-        [5000, 1200],
-        [5500, 900],
-        [6000, 500],
-        [6500, 300],
-        [6999, 500],
-    ],
-    "shuttle": {
-        "position": [6500, 2700],
-        "h_speed": -50,
-        "v_speed": 0,
-        "fuel": 1000,
-        "rotate": 90,
-        "power": 0
-    },
-}
 
 MAP_WIDTH = 7000
 MAP_HEIGHT = 3000
@@ -151,11 +44,11 @@ def clamp(value, min_value, max_value):
 
 @dataclass
 class Point:
-    x: int
-    y: int
+    x: float
+    y: float
 
     def __str__(self) -> str:
-        return f"({self.x},{self.y})"
+        return f"({round(self.x)}, {round(self.y)})"
 
     def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
@@ -176,7 +69,6 @@ class Line:
         self._point0: Point = point0
         self._point1: Point = point1
         self._landing_zone_direction: int = -1
-        # self._is_landing_zone: bool = False
 
     @property
     def point0(self) -> int:
@@ -187,10 +79,10 @@ class Line:
         return self._point1
 
     def line_to_point(self) -> tuple:
-        return (self._point0.x//DIVISOR_FOR_PRINTER,
-                MAP_HEIGHT//DIVISOR_FOR_PRINTER - self._point0.y//DIVISOR_FOR_PRINTER,
-                self._point1.x//DIVISOR_FOR_PRINTER,
-                MAP_HEIGHT//DIVISOR_FOR_PRINTER - self._point1.y//DIVISOR_FOR_PRINTER)
+        return (round(self._point0.x//DIVISOR_FOR_PRINTER),
+                round(MAP_HEIGHT//DIVISOR_FOR_PRINTER - self._point0.y//DIVISOR_FOR_PRINTER),
+                round(self._point1.x//DIVISOR_FOR_PRINTER),
+                round(MAP_HEIGHT//DIVISOR_FOR_PRINTER - self._point1.y//DIVISOR_FOR_PRINTER))
 
     @property
     def landing_zone_direction(self) -> int:
@@ -229,7 +121,7 @@ class Surface:
         point0 = Point(0, 0)
         landing_zone_found = False
         for i, point in enumerate(data):
-            point1 = Point(point[0], point[1])
+            point1 = Point(int(point[0]), int(point[1]))
             if i != 0:
                 line = Line(point0, point1)
                 if line.point0.y == line.point1.y:
@@ -243,7 +135,6 @@ class Surface:
 
     def collision_with_surface(self, point0: Point, point1: Point):
         if not 0 < point1.x < MAP_WIDTH or not 0 < point1.y < MAP_HEIGHT:
-            print("Shuttle is out of the MAP")
             return True, 0, False
 
         for idx, line in enumerate(self._lines):
@@ -285,8 +176,8 @@ class Shuttle:
     def __str__(self) -> str:
         return (
             f"pos: {self.position}, "
-            + f"h_speed: {round(self._h_speed, 2)}, "
-            + f"v_speed: {round(self._v_speed, 2)}, "
+            + f"h_speed: {round(self._h_speed)}, "
+            + f"v_speed: {round(self._v_speed)}, "
             + f"rotate: {self._rotate}, "
             + f"power: {self._power}, "
             + f"fuel: {self._fuel}"
@@ -379,8 +270,8 @@ class Shuttle:
         theta = math.radians(self._rotate + 90)
         acc_v = (math.sin(theta) * self._power) - MARS_GRAVITY
         acc_h = math.cos(theta) * self._power
-        disp_v = round(self._v_speed + (acc_v / 2))
-        disp_h = round(self._h_speed + (acc_h / 2))
+        disp_v = self._v_speed + (acc_v / 2)
+        disp_h = self._h_speed + (acc_h / 2)
         return acc_v, disp_v, acc_h, disp_h
 
     def _add_rotate(self, rotate: int):
@@ -665,14 +556,7 @@ class Renderer:
             p0 = point
 
     def draw_shuttle_trajectory(self, shuttle: Shuttle):
-        if shuttle.successfull_landing:
-            self.set_color(sdl2.ext.Color(0, 255, 0))
-        elif shuttle.crashed_on_landing_zone:
-            self.set_color(sdl2.ext.Color(0, 200, 200))
-        else:
-            self.set_color(sdl2.ext.Color(100, 100, 100))
-
-        self.draw_lines(shuttle.trajectory())
+        self.draw_lines([x[0] for x in shuttle.trajectory()])
 
     def is_quit(self):
         events = sdl2.ext.get_events()
@@ -690,31 +574,54 @@ class Game:
         self._genetic_population: GeneticPopulation = GeneticPopulation()
         self._renderer: Renderer = Renderer()
         self._log_fitness: list[float] = []
+        self._chromosome_landing: list[Chromosome] = []
 
-    def add_parameters(self, data):
+    def _read_parameters_from_file(self, filename):
+        data = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                data.append(line.rsplit())
+
         # Create surface from data
-        surface = data.get("surface", None)
-        if surface is not None:
-            self._surface.create_surface_from_point(surface)
-            self._genetic_population.surface = self._surface
+        self._surface.create_surface_from_point(data[:-1])
+        self._genetic_population.surface = self._surface
 
         # Create shuttle from data
-        shuttle = data.get("shuttle", None)
-        if shuttle is not None:
-            self._shuttle.position = Point(int(shuttle["position"][0]), int(shuttle["position"][1]))
-            self._shuttle.h_speed = int(shuttle["h_speed"])
-            self._shuttle.v_speed = int(shuttle["v_speed"])
-            self._shuttle.fuel = int(shuttle["fuel"])
-            self._shuttle.rotate = int(shuttle["rotate"])
-            self._genetic_population.shuttle = self._shuttle
+        self._shuttle.position = Point(int(data[-1][0]), int(data[-1][1]))
+        self._shuttle.h_speed = int(data[-1][2])
+        self._shuttle.v_speed = int(data[-1][3])
+        self._shuttle.fuel = int(data[-1][4])
+        self._shuttle.rotate = int(data[-1][5])
+        self._shuttle.power = int(data[-1][6])
+        self._genetic_population.shuttle = self._shuttle
 
-    def begin(self):
+    def _write_svg(self, filename:str):
+        line_chart = pygal.Line(show_dots=True, show_legend=False)
+        line_chart.title = 'Fitness evolution'
+        line_chart.x_title = 'Generations'
+        line_chart.y_title = 'Fitness'
+        line_chart.add('Fitness', self._log_fitness)
+        line_chart.render_to_file(filename)
+
+    def _write_data_to_file(self, filename: str):
+        if len(self._chromosome_landing) > 0:
+            result = "{\n"
+            result += f"\"{filename.split('.')[0]}\" : [\n"
+            for gene in self._chromosome_landing[0].genes:
+                result += f"[{gene}],\n"
+            result = result[:-2]
+            result += "\n"
+            result += "]\n"
+            result += "}"
+            with open(filename, "w") as f:
+                f.write(result)
+
+    def _begin(self, filename: str):
+        self._read_parameters_from_file(filename)
         print("Start shuttle => " + str(self._shuttle))
         self._genetic_population.random()
-        for line in self._surface.lines:
-            self._renderer.draw_line(line)
 
-    def loop(self):
+    def _loop(self):
         done: bool = False
         nb_generation = 0
         while not done and not self._renderer.is_quit() and nb_generation < GENERATION_COUNT_MAX:
@@ -760,18 +667,17 @@ class Game:
         if not done:
             print("!!! No solution found !!!")
 
-    def end(self):
-        line_chart = pygal.Line(show_dots=True, show_legend=False)
-        line_chart.title = 'Fitness evolution'
-        line_chart.x_title = 'Generations'
-        line_chart.y_title = 'Fitness'
-        line_chart.add('Fitness', self._log_fitness)
-        line_chart.render_to_file('fitness_chart.svg')
+    def _end(self, filename: str):
+        filename = filename.replace("input", "output")
+        self._write_data_to_file(filename)
+        self._write_svg(filename.replace("txt", "svg"))
+        while not self._renderer.is_quit():
+            pass
 
-    def play(self):
-        self.begin()
-        self.loop()
-        self.end()
+    def play(self, filename):
+        self._begin(filename)
+        self._loop()
+        self._end(filename)
 
 
 class Simulator:
@@ -781,89 +687,76 @@ class Simulator:
         self._chromosome: Chromosome = Chromosome()
         self._renderer: Renderer = Renderer()
 
-    def add_parameters(self, data):
+    def _read_parameters_from_file(self, filename):
+        data = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                data.append(line.rsplit())
+
         # Create surface from data
-        surface = data.get("surface", None)
-        if surface is not None:
-            self._surface.create_surface_from_point(surface)
+        self._surface.create_surface_from_point(data[:-1])
 
         # Create shuttle from data
-        shuttle = data.get("shuttle", None)
-        if shuttle is not None:
-            self._shuttle.position = Point(int(shuttle["position"][0]), int(shuttle["position"][1]))
-            self._shuttle.h_speed = int(shuttle["h_speed"])
-            self._shuttle.v_speed = int(shuttle["v_speed"])
-            self._shuttle.fuel = int(shuttle["fuel"])
-            self._shuttle.rotate = int(shuttle["rotate"])
+        self._shuttle.position = Point(int(data[-1][0]), int(data[-1][1]))
+        self._shuttle.h_speed = int(data[-1][2])
+        self._shuttle.v_speed = int(data[-1][3])
+        self._shuttle.fuel = int(data[-1][4])
+        self._shuttle.rotate = int(data[-1][5])
+        self._shuttle.power = int(data[-1][6])
 
-    def add_data(self, data):
+    def add_data(self, filename: str):
+        with open(filename, "r") as f:
+            data = json.load(f)
+        data = data.get(filename.removesuffix(".txt"))
         for idx, d in enumerate(data):
-            gene = Gene(d[0], d[1])
+            gene = Gene(int(d[0]), int(d[1]))
             self._chromosome.set_gene(idx, gene)
 
-    def begin(self):
+    def _begin(self, filename: str):
+        self._read_parameters_from_file(filename)
         print("Start shuttle => " + str(self._shuttle))
-        for line in self._surface.lines:
-            if line.landing_zone_direction == 0:
-                self._renderer.set_color(sdl2.ext.Color(0, 0, 255))
-                self._renderer.draw_line(line)
-            else:
-                self._renderer.set_color(sdl2.ext.Color())
-                self._renderer.draw_line(line)
 
         self._chromosome.shuttle = self._shuttle
         self._chromosome.surface = self._surface
 
-    def loop(self):
-        self._chromosome.simulate()
+        # Create the renderer
+        self._renderer.clear()
+        for line in self._surface.lines:
+            if line.landing_zone_direction == 0:
+                self._renderer.set_color(sdl2.ext.Color(255, 0, 255))
+                self._renderer.draw_line(line)
+            else:
+                self._renderer.set_color(sdl2.ext.Color(255, 0, 0))
+                self._renderer.draw_line(line)
+
+    def _loop(self):
+        self._chromosome.simulate(True)
         self._chromosome.evaluate()
 
-    def end(self):
+    def _end(self):
         # Create the renderer
         self._renderer.draw_shuttle_trajectory(self._chromosome.shuttle)
         self._renderer.refresh()
         while not self._renderer.is_quit():
             pass
 
-    def play(self):
-        self.begin()
-        self.loop()
-        self.end()
+    def play(self, filename: str):
+        self._begin(filename)
+        self._loop()
+        self._end()
 
 
 if __name__ == "__main__":
-    arg = sys.argv[1] if len(sys.argv) >= 2 else "1"
-    mode = sys.argv[2] if len(sys.argv) >= 3 else "--genetic_algorithm"
+    filename = sys.argv[1] if len(sys.argv) >= 2 else "input_2_1.txt"
+    file_replay = sys.argv[2] if len(sys.argv) >= 3 else None
 
-    if mode == "--replay":
+    if file_replay is not None:
         simu = Simulator()
-        if arg == "0":
-            simu.add_parameters(INPUT_DATA_0)
-        elif arg == "1":
-            simu.add_parameters(INPUT_DATA_1)
-        elif arg == "4":
-            simu.add_parameters(INPUT_DATA_4)
-        elif arg == "5":
-            simu.add_parameters(INPUT_DATA_5)
-        data = []
-        with open(f"result.txt", "r") as f:
-            for line in f.readlines():
-                tmp = [int(d) for d in line.split(',')]
-                data.append(tuple(tmp))
-        simu.add_data(data)
-        simu.play()
-        exit()
+        simu.add_data(file_replay)
+        simu.play(filename)
 
     else:
         game = Game()
-        if arg == "0":
-            game.add_parameters(INPUT_DATA_0)
-        elif arg == "1":
-            game.add_parameters(INPUT_DATA_1)
-        elif arg == "4":
-            game.add_parameters(INPUT_DATA_4)
-        elif arg == "5":
-            game.add_parameters(INPUT_DATA_5)
+        game.play(filename)
 
-        game.play()
-        time.sleep(2)
+    exit()
