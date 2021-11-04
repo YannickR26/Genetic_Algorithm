@@ -305,34 +305,18 @@ class Shuttle:
 
 class Gene:
     def __init__(self, rotate: int = 0, power: int = 0) -> None:
-        self._rotate: int = rotate  # The change in angle, based on previous postion, in range [-15, 15]
-        self._power: int = power    # The change in power, based on previoud postion, in range [-1, 1]
+        self.rotate: int = rotate  # The change in angle, based on previous postion, in range [-15, 15]
+        self.power: int = power    # The change in power, based on previoud postion, in range [-1, 1]
 
     def __eq__(self, other) -> bool:
-        return self._rotate == other.rotate and self._power == other.power
+        return self.rotate == other.rotate and self.power == other.power
 
     def __str__(self) -> str:
-        return f"{self._rotate}, {self._power}"
-
-    @property
-    def rotate(self) -> int:
-        return self._rotate
-
-    @rotate.setter
-    def rotate(self, value: int):
-        self._rotate = value
-
-    @property
-    def power(self) -> int:
-        return self._power
-
-    @power.setter
-    def power(self, value: int):
-        self._power = value
+        return f"{self.rotate}, {self.power}"
 
     def random(self):
-        self._rotate = randint(-STEP_ROTATION_ANGLE, STEP_ROTATION_ANGLE)
-        self._power = randint(-STEP_POWER, STEP_POWER)
+        self.rotate = randint(-STEP_ROTATION_ANGLE, STEP_ROTATION_ANGLE)
+        self.power = randint(-STEP_POWER, STEP_POWER)
 
 
 class Chromosome:
