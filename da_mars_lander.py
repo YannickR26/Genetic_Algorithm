@@ -620,36 +620,34 @@ class Game:
             # Create the renderer
             self._renderer.clear()
             for line in self._surface.lines:
-                self._renderer.set_color(sdl2.ext.Color())
-                self._renderer.draw_line(line)
-            for chromosome in self._genetic_population.get_chromosomes():
+                if line.landing_zone_direction == 0:
+                    self._renderer.set_color(sdl2.ext.Color(255, 0, 255))
+                    self._renderer.draw_line(line)
+                else:
+                    self._renderer.set_color(sdl2.ext.Color(255, 0, 0))
+                    self._renderer.draw_line(line)
                 self._renderer.draw_shuttle_trajectory(chromosome.shuttle)
             self._renderer.refresh()
 
             # Check if one or more shuttle are successfully landing
             for chromosome in self._genetic_population.get_population():
                 if chromosome.shuttle.successfull_landing:
+                    self._renderer.set_color(sdl2.ext.Color(r=0, g=255, b=0))
+                    self._renderer.draw_shuttle_trajectory(chromosome.shuttle)
                     print("The shuttle landing with:")
                     print(chromosome.shuttle)
                     done = True
-                    result = ""
-                    for gene in chromosome.genes:
-                        result += f"{gene}\n"
-                    with open(f"result.txt", "w") as f:
-                        f.write(result)
+                    self._chromosome_landing.append(deepcopy(chromosome))
                     continue
+
+            self._renderer.refresh()
 
             nb_generation += 1
             print(f"nb_generation: {nb_generation}")
-            # with open(f"population_{nb_generation}.txt", "w") as f:
-                # f.write(str(self._genetic_population))
 
             # Create a new genetic population
             self._genetic_population.make_next_generation()
-            time.sleep(0.5)
-            # done = True
-            # while not self._renderer.is_quit():
-            #     pass
+            # time.sleep(0.5)
 
         if not done:
             print("!!! No solution found !!!")
