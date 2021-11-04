@@ -461,11 +461,11 @@ class Chromosome:
         return self._genes == other.genes
 
     @property
-    def evaluation(self) -> float:
+    def fitness(self) -> float:
         return self._evaluation
 
-    @evaluation.setter
-    def evaluation(self, value: float):
+    @fitness.setter
+    def fitness(self, value: float):
         self._evaluation = value
 
     def random(self):
@@ -547,7 +547,7 @@ class Chromosome:
     def from_crossover(mother, father) -> tuple:
         child0 = Chromosome()
         child1 = Chromosome()
-        for idx, gene in enumerate(range(CHROMOSOME_SIZE)):
+        for idx in range(CHROMOSOME_SIZE):
             gene_mother = mother.get_gene(idx)
             gene_father = father.get_gene(idx)
             beta = random()
@@ -576,7 +576,7 @@ class GeneticPopulation:
         for chromosome in self._population:
             chromosome.random()
 
-    def get_chromosomes(self) -> list[Chromosome]:
+    def get_population(self) -> list[Chromosome]:
         return self._population
 
     @property
@@ -602,11 +602,10 @@ class GeneticPopulation:
             chromosome.simulate()
             chromosome.evaluate()
 
-    def make_next_generation(self):
         # Sort by attribute evaluation
-        self._population.sort(key=lambda x: x.evaluation, reverse=True)
-        for chromosome in self._population:
-            print(f"evaluation: {chromosome.evaluation:.3f}")
+        self._population.sort(key=lambda x: x.fitness, reverse=True)
+
+    def make_next_generation(self):
 
         # Filter the top graded chromosome
         cut_pos = int(GRADED_RETAIN_PERCENT * POPULATION_SIZE)
@@ -635,7 +634,7 @@ class GeneticPopulation:
         new_population.extend(children)
 
         # Save the new population
-        self._population = new_population[:POPULATION_SIZE]
+        self._population = deepcopy(new_population[:POPULATION_SIZE])
 
 
 class Renderer:
@@ -734,7 +733,7 @@ class Game:
             self._renderer.refresh()
 
             # Check if one or more shuttle are successfully landing
-            for chromosome in self._genetic_population.get_chromosomes():
+            for chromosome in self._genetic_population.get_population():
                 if chromosome.shuttle.successfull_landing:
                     print("The shuttle landing with:")
                     print(chromosome.shuttle)
