@@ -171,7 +171,7 @@ class Shuttle:
         self._crash_on_landing_zone: bool = False
         self._crash_distance: float = 0.0  # Distance between crash and landing zone
         self._successfull_landing: bool = False
-        self._trajectory: list[Point] = []
+        self._trajectory: list[tuple[Point, int, int]] = []
 
     def __str__(self) -> str:
         return (
@@ -185,11 +185,11 @@ class Shuttle:
 
     @property
     def position(self) -> Point:
-        return self._trajectory[-1]
+        return self._trajectory[-1][0]
 
     @position.setter
     def position(self, value: Point):
-        self._trajectory.append(value)
+        self._trajectory.append((value, self._rotate, self._power))
 
     @property
     def v_speed(self) -> float:
@@ -263,7 +263,7 @@ class Shuttle:
     def successfull_landing(self) -> bool:
         return self.crashed_on_landing_zone and abs(self.v_speed) < MAX_V_SPEED and abs(self.h_speed) < MAX_H_SPEED and self.rotate == 0 and self.fuel > 0
 
-    def trajectory(self) -> list[Point]:
+    def trajectory(self) -> list[tuple[Point, int, int]]:
         return self._trajectory
 
     def _compute(self) -> tuple:
@@ -400,7 +400,7 @@ class Chromosome:
                 crashed,
                 idx_line_crashed,
                 crashed_in_landing_zone,
-            ) = self._surface.collision_with_surface(self._shuttle.trajectory()[-2], self._shuttle.trajectory()[-1])
+            ) = self._surface.collision_with_surface(self._shuttle.trajectory()[-2][0], self._shuttle.trajectory()[-1][0])
             if crashed:
                 self._shuttle.crashed = True
                 distance = self._surface.find_distance_to_landing_zone(
