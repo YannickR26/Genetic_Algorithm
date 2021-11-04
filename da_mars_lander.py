@@ -377,9 +377,12 @@ class Chromosome:
     def shuttle(self, shuttle: Shuttle):
         self._shuttle = deepcopy(shuttle)
 
-    def simulate(self):
-        for gene in self._genes:
+    def simulate(self, log_en: bool = False):
+        for idx, gene in enumerate(self._genes):
             self._shuttle.simulate(gene.rotate, gene.power)
+            if log_en:
+                print(f"G{idx}: {gene}")
+                print(self._shuttle)
             (
                 crashed,
                 idx_line_crashed,
